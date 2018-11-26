@@ -50,25 +50,27 @@ class FlowNetC(nn.Module):
                 constant_(m.bias, 0)
 
     def forward(self, x):# X.SHAPE = B*3*c*h*w
-        x1 = torch.tensor(x[:,0]).type(torch.FloatTensor) ## x1.shape = B,C,H,W
+        x1 = torch.tensor(x[:,0]).type(torch.cuda.FloatTensor) ## x1.shape = B,C,H,W
         # print("x.shape",np.shape(x1))
-        x2 = torch.tensor(x[:,1]).type(torch.FloatTensor)
-        x3 = torch.tensor(x[:,2]).type(torch.FloatTensor)
+        x2 = torch.tensor(x[:,1]).type(torch.cuda.FloatTensor)
+        x3 = torch.tensor(x[:,2]).type(torch.cuda.FloatTensor)
         # x1 = np.rollaxis(x1,2,1)
         # x1 = np.rollaxis(x1,3,2)
         # skimage.io.imshow(x1[0])
         # plt.show()
 
         out_conv1a = self.conv1(x1)
+        
         out_conv2a = self.conv2(out_conv1a)
         out_conv3a = self.conv3(out_conv2a)
 
         out_conv1b = self.conv1(x2)
         out_conv2b = self.conv2(out_conv1b)
         out_conv3b = self.conv3(out_conv2b)
-
         out_conv_redir = self.conv_redir(out_conv3a)
         out_correlation = correlate(out_conv3a,out_conv3b)
+
+
 
         in_conv3_1 = torch.cat([out_conv_redir, out_correlation], dim=1)
 
@@ -77,7 +79,9 @@ class FlowNetC(nn.Module):
         out_conv5 = self.conv5_1(self.conv5(out_conv4))
         out_conv6 = self.conv6_1(self.conv6(out_conv5))
 
+
         flow6       = self.predict_flow6(out_conv6)
+        
         flow6_up    = crop_like(self.upsampled_flow6_to_5(flow6), out_conv5)
         out_deconv5 = crop_like(self.deconv5(out_conv6), out_conv5)
 
@@ -99,6 +103,8 @@ class FlowNetC(nn.Module):
         concat2 = torch.cat((out_conv2a,out_deconv2,flow3_up),1)
         flow2 = self.predict_flow2(concat2)
 
+        # print("mnsadkandn")
+        # print("shape",flow2.size(),flow3.size(),flow4.size(),flow5.size(),flow6.size())
         if self.training:
             return flow2,flow3,flow4,flow5,flow6
         else:

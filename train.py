@@ -2,6 +2,9 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import time
+import skimage.io
+from losses import *
+from matplotlib import pyplot as plt
 
 def train(train_loader, model, optimizer):
     # global n_iter, args
@@ -14,11 +17,31 @@ def train(train_loader, model, optimizer):
     epoch_size = 1
     epoch = 0
     # switch to train mode
+    train_loader = torch.tensor(train_loader).type(torch.cuda.FloatTensor)
     model.train()
 
     end = time.time()
 
     out_flow = model(train_loader)
+    h, w = train_loader.size()[-2:]
+    # print(h,w)
+    out_flow = [F.interpolate(oflow, (h,w)) for oflow in out_flow]
+    # print("out_flow.shape",out_flow[1].size(),   train_loader.shape)
+    # fl = out_flow[0].numpy()
+    out_image = []
+
+    for p in range(0,5):
+        ofnp = out_flow[p].permute(0,2,3,1)
+        out_image.append(F.grid_sample(train_loader[:,0],ofnp))
+
+    loss_image = loss(train_loader[:,1],out_image)
+
+    print("loss_image",loss_image.data)
+    optimizer.zero_grad()
+    loss_image.backward()
+    optimizer.step()
+
+
 '''    for i, input in enumerate(train_loader):
         # measure data loading time
         # data_time.update(time.time() - end)
@@ -32,8 +55,8 @@ def train(train_loader, model, optimizer):
         # if args.sparse:
             # Since Target pooling is not very precise when sparse,
             # take the highest resolution prediction and upsample it instead of downsampling target
-        # # h, w = input.size()[-2:]
-        # out_flow = [F.interpolate(out_flow[0], (h,w)), *out_flow[1:]]
+        h, w = input.size()[-2:]
+        out_flow = [F.interpolate(out_flow[0], (h,w)), *out_flow[1:]]
         # out_image = []
         # out_image.append(F.grid_sample(input,out_flow[0]))
         # out_image.append(F.grid_sample(input,out_flow[1]))
