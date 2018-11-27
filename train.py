@@ -5,6 +5,22 @@ import time
 import skimage.io
 from losses import *
 from matplotlib import pyplot as plt
+import cv2
+def display_flow(u,v,x_orig):
+    hsv = np.zeros(x_orig.size(), dtype=np.uint8)
+    hsv = np.rollaxis(np.rollaxis(hsv,1,0),2,1)
+    print("hsv",hsv.shape)
+    hsv[..., 1] = 255
+    print("hsv",hsv.shape)
+    print("u.shape",u.shape)
+    mag, ang = cv2.cartToPolar(u, v)
+    print("mag.shape",np.shape(mag),np.shape(ang))
+    hsv[..., 0] = ang * 180 / np.pi / 2
+    hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
+    bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    cv2.imshow("colored flow", bgr)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 def train(train_loader, model, optimizer):
     # global n_iter, args
@@ -32,9 +48,64 @@ def train(train_loader, model, optimizer):
 
     for p in range(0,5):
         ofnp = out_flow[p].permute(0,2,3,1)
-        out_image.append(F.grid_sample(train_loader[:,0],ofnp))
+        flow_h = ofnp.size()[1]
+        print('flow_h',flow_h)
+        flow_w = ofnp.size()[2]
+        ofnp[:,0:1] = ofnp[:,0:1]/flow_h
+        # if(ofnp[:,0:1]>1):
+        #      ofnp[:,0:1]=1
+        ofnp[:,1:2] = ofnp[:,1:2]/flow_w 
+        # ofnp = np.meshgrid(np.linspace(0,0,flow_w), np.linspace(-0,0,flow_h))
+        # ofnp = torch.tensor(ofnp).type(torch.cuda.FloatTensor)
+        # ofnp = ofnp.unsqueeze(0)
+        # ofnp = ofnp.permute(0,2,3,1)
+        # print('ofnp.sahpe',ofnp.size())
 
-    loss_image = loss(train_loader[:,1],out_image)
+        # ofnp = torch.clamp(ofnp,min=-0.0,max=0.0)
+        # ofnp = (ofnp/torch.max(ofnp)[0])*2-1
+        # ofnp =  
+        print('Max',torch.max(ofnp))
+        print('Min',torch.min(ofnp))
+        out_image.append(F.grid_sample((train_loader[:,0]+1)/2,ofnp))
+
+    
+
+    x_orig = train_loader[0,0]
+    x_orig = 255.0*(x_orig)     
+    x_orig = x_orig.type(torch.cuda.IntTensor)
+    skimage.io.imsave("./orginial_img.png",np.rollaxis(np.rollaxis(x_orig.cpu().data.numpy(),1,0),2,1))
+    
+    xi = out_image[0][0,:]
+    xi = 255.0*(xi + 1.0)/2.0    
+    xi = xi.type(torch.cuda.IntTensor)
+    skimage.io.imsave("./warped_img.png",np.rollaxis(np.rollaxis(xi.cpu().data.numpy(),1,0),2,1))
+    # plt.show()
+    
+    u = out_flow[0][0,0].cpu().data.numpy()
+    v = out_flow[0][0,1].cpu().data.numpy()
+    # u = np.rollaxis(np.rollaxis(out_flow[0][0,0].cpu().data.numpy(),1,0),2,1)
+    # v = np.rollaxis(np.rollaxis(out_flow[0][0,1].cpu().data.numpy(),1,0),2,1)
+    display_flow(u,v,x_orig)
+    # hsv = np.zeros(x_orig.size(), dtype=np.uint8)
+
+    # hsv = np.rollaxis(np.rollaxis(hsv,1,0),2,1)
+    # print("hsv",hsv.shape)
+
+    # hsv[..., 1] = 255
+    # print("hsv",hsv.shape)
+    # print("u.shape",u.shape)
+    # mag, ang = cv2.cartToPolar(u, v)
+    # print("mag.shape",np.shape(mag),np.shape(ang))
+    # hsv[..., 0] = ang * 180 / np.pi / 2
+    # hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
+    # bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    # cv2.imshow("colored flow", bgr)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+
+
+    end
+    loss_image = loss(train_loader[:,1],out_image,out_flow[0])
 
     print("loss_image",loss_image.data)
     optimizer.zero_grad()
