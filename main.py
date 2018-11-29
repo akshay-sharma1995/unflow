@@ -25,8 +25,12 @@ def imlist(fpath):
     flist = os.listdir(fpath)
     return flist
 
-def channel_rearrange(image_batch):
-    return
+def plot_loss(epoch_loss_list,num_epochs):
+    epochs = np.arange(1,num_epochs+1)
+    plt.plot(epochs,epoch_loss_list,'k-')
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+    plt.show()
 
 
 def main():
@@ -38,6 +42,7 @@ def main():
 
     optimizer = optim.Adam(model.parameters(),lr=1e-4)
     DIR = "../../../Project_data/training_data/small_dataset_npz_3_set/"
+    checkpoints_dir = "../unflow/checkpoints/"
     input_transform = transforms.Compose([
         flow_transforms.ArrayToTensor(),
         transforms.Normalize(mean=[0,0,0], std=[255,255,255]),
@@ -54,24 +59,46 @@ def main():
     number_of_image_sets = len(flist)
     idxs = (np.arange(1,number_of_image_sets,1)) ## id of all image_sets
     random.shuffle(idxs) ## shuffling the idxs
+    num_epochs = 10
+    
+    epoch_loss_list = []
+    for epoch in range(0,num_epochs):
 
-    for i in range(len(idxs)):
-        image_batch = []
+        epoch_loss = 0
+        for i in range(len(idxs)):
+            image_batch = []
+            if(len(idxs)-i>=batch_size):
+                count = batch_size
+            else:
+                count = len(idxs) - i
+            for j in range(count): ## making batches
+                path = DIR + flist[idxs[i]]
+                image_triplet = np.load(path)['arr_0']
+                ## image_triplet.size = 3x3xHxW
+                ## mapping the images to (-1,1)
+                image_triplet = (image_triplet.astype(np.float64) / 255.0) * 2.0 - 1.0
+                # print("max_min", np.nanmax(image_triplet),np.nanmin(image_triplet))
+                image_batch.append(image_triplet)
 
-        for j in range(batch_size): ## making batches
-            path = DIR + flist[idxs[i]]
-            image_triplet = np.load(path)['arr_0']
-            ## image_triplet.size = 3x3xHxW
-            ## mapping the images to (-1,1)
-            image_triplet = (image_triplet.astype(np.float64) / 255.0) * 2.0 - 1.0
-            # print("max_min", np.nanmax(image_triplet),np.nanmin(image_triplet))
-            image_batch.append(image_triplet)
-        image_batch = np.array(image_batch)
-        image_batch = np.rollaxis(image_batch,4,2)
+            image_batch = np.array(image_batch)
+            image_batch = np.rollaxis(image_batch,4,2)
 
-        # print("listofimages.shape",np.shape(image_batch))
-        train(image_batch,model,optimizer)
+            # print("listofimages.shape",np.shape(image_batch))
+            batch_loss = train(image_batch,model,optimizer)
+            epoch_loss += batch_loss
+        print("Epoch = ",epoch+1,"/ ",num_epochs,"  Loss = ",epoch_loss)
+        epoch_loss_list.append(epoch_loss)
 
+            ## saving model_weights
+        if((epoch + 1)%2):
+            checkpoint_file_name = checkpoints_dir + "Saved_model_"+str(epoch+1)
+            torch.save({
+            'epoch': epoch+1,
+            'model_state_dict': model.state_dict(),
+            # 'optimizer_state_dict': optimizer.state_dict(),
+            'loss': epoch_loss}, checkpoint_file_name+".pth")
+            
 
+    plot_loss(epoch_loss_list,num_epochs)
 if __name__ == '__main__':
     main()

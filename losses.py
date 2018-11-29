@@ -33,7 +33,7 @@ class spatial_smoothing_loss(nn.Module):
 	def forward(self, X): ## X is flow map
 		u = X[:,0:1]
 		v = X[:,1:2]
-		print("u",u.size())
+		# print("u",u.size())
 		hf1 = torch.tensor([[[[0,0,0],[-1,2,-1],[0,0,0]]]]).type(torch.cuda.FloatTensor)
 		hf2 = torch.tensor([[[[0,-1,0],[0,2,0],[0,-1,0]]]]).type(torch.cuda.FloatTensor)
 		hf3 = torch.tensor([[[[-1,0,-1],[0,4,0],[-1,0,-1]]]]).type(torch.cuda.FloatTensor)
@@ -76,5 +76,5 @@ def temporal_loss(of1,of2):
 	eps = 1e-6
 	of2_warped = image_warp(of2,of2)
 	t_loss = charbonier(of2_warped-of1,eps)
-	print("t_loss",t_loss)
+	# print("t_loss",t_loss)
 	return t_loss

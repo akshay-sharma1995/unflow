@@ -67,8 +67,8 @@ def image_warp(im,flow):
 	idx_d = base_y1 + x1
 	idx_d = idx_d.unsqueeze(1).repeat(1,channels)
 
-	print(im_flat.size())
-	print(idx_a.size())
+	# print(im_flat.size())
+	# print(idx_a.size())
 
 	Ia = torch.gather(im_flat, dim=0, index=idx_a.type(torch.cuda.LongTensor))
 	Ib = torch.gather(im_flat, dim=0, index=idx_b.type(torch.cuda.LongTensor))
