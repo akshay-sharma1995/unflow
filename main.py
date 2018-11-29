@@ -29,8 +29,9 @@ def channel_rearrange(image_batch):
     return
 
 
-def loader():
+def main():
     model = FlowNetC()
+    # s_loss = 
     if torch.cuda.is_available():
         model.cuda()
         print("Model shifted to GPU")
@@ -60,6 +61,7 @@ def loader():
         for j in range(batch_size): ## making batches
             path = DIR + flist[idxs[i]]
             image_triplet = np.load(path)['arr_0']
+            ## image_triplet.size = 3x3xHxW
             ## mapping the images to (-1,1)
             image_triplet = (image_triplet.astype(np.float64) / 255.0) * 2.0 - 1.0
             # print("max_min", np.nanmax(image_triplet),np.nanmin(image_triplet))
@@ -70,7 +72,6 @@ def loader():
         # print("listofimages.shape",np.shape(image_batch))
         train(image_batch,model,optimizer)
 
-def main():
-    loader()
+
 if __name__ == '__main__':
     main()

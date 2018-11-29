@@ -49,11 +49,11 @@ class FlowNetC(nn.Module):
                 constant_(m.weight, 1)
                 constant_(m.bias, 0)
 
-    def forward(self, x):# X.SHAPE = B*3*c*h*w
+    def forward(self, x):# X.SHAPE = Bx2xcxhxw
         x1 = torch.tensor(x[:,0]).type(torch.cuda.FloatTensor) ## x1.shape = B,C,H,W
         # print("x.shape",np.shape(x1))
         x2 = torch.tensor(x[:,1]).type(torch.cuda.FloatTensor)
-        x3 = torch.tensor(x[:,2]).type(torch.cuda.FloatTensor)
+        # x3 = torch.tensor(x[:,2]).type(torch.cuda.FloatTensor)
         # x1 = np.rollaxis(x1,2,1)
         # x1 = np.rollaxis(x1,3,2)
         # skimage.io.imshow(x1[0])

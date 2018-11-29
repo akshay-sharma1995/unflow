@@ -1,16 +1,23 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from image_warp import *
 
-def loss(target,out_image,flow):
+		# loss = loss(train_loader,warped_img12,warped_img23,oflow12,oflow23)
+
+def flow_loss(train_loader,warped_img12,warped_img23,oflow12,oflow23,weight):
 	s_loss_model = spatial_smoothing_loss()
-	s_loss = s_loss_model(flow)
-	print("s_loss",s_loss)
+	s_loss1 = s_loss_model(oflow12)
+	s_loss2 = s_loss_model(oflow23)
+	# print("s_loss",s_loss)
+	t_loss = temporal_loss(oflow12,oflow23)
 	criterion = torch.nn.MSELoss()
-	weights = [0.005, 0.01, 0.02, 0.08, 0.32]
+
 	loss = 0
-	for i in range(1):
-		loss+= weights[i]*criterion(target,out_image[i])
+	loss += weight*criterion(train_loader[:,1],warped_img12)
+	loss += weight*criterion(train_loader[:,2],warped_img23)
+
+	loss = loss + t_loss + s_loss1 + s_loss2
 	return loss
 
 
@@ -63,3 +70,11 @@ def charbonier(x,eps):
 	loss = torch.pow(loss,gamma)
 	loss = torch.mean(loss)
 	return loss
+
+
+def temporal_loss(of1,of2):
+	eps = 1e-6
+	of2_warped = image_warp(of2,of2)
+	t_loss = charbonier(of2_warped-of1,eps)
+	print("t_loss",t_loss)
+	return t_loss
