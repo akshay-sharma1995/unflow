@@ -90,8 +90,8 @@ def main():
         epoch_loss_list.append(epoch_loss)
 
             ## saving model_weights
-        if((epoch + 1)%2):
-            checkpoint_file_name = checkpoints_dir + "Saved_model_"+str(epoch+1)
+        if((epoch + 1)%1):
+            checkpoint_file_name = checkpoints_dir + "t_loss_model"+str(epoch+1)
             torch.save({
             'epoch': epoch+1,
             'model_state_dict': model.state_dict(),

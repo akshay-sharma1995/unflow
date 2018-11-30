@@ -74,7 +74,7 @@ def charbonier(x,eps):
 
 def temporal_loss(of1,of2):
 	eps = 1e-6
-	of2_warped = image_warp(of2,of2)
-	t_loss = charbonier(of2_warped-of1,eps)
+	of1_warped = image_warp(of1,of1)
+	t_loss = charbonier(of1_warped-of2,eps)
 	# print("t_loss",t_loss)
 	return t_loss
