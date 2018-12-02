@@ -1,5 +1,8 @@
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
+import cv2
+import skimage.io
 
 try:
     from spatial_correlation_sampler import spatial_correlation_sample
@@ -56,3 +59,24 @@ def crop_like(input, target):
         return input
     else:
         return input[:, :, :target.size(2), :target.size(3)]
+
+
+def rgb_to_y(input):
+  # input is mini-batch N x 3 x H x W of an RGB image
+  output = Variable(input.data.new(*input.size()))
+  output[:, 0, :, :] = input[:, 0, :, :] * 65.481 + input[:, 1, :, :] * 128.553 + input[:, 2, :, :] * 24.966 + 16
+  # similarly write output[:, 1, :, :] and output[:, 2, :, :] using formulas from https://en.wikipedia.org/wiki/YCbCr
+  return output[:, 0:1, :, :] ## just the y-channel
+
+
+
+def visualize_op_flow(flow):
+  h,w = np.shape(flow)[0],np.shape(flow)[1]
+  hsv = np.zeros((h,w,3), dtype=np.uint8)
+  hsv[..., 1] = 255
+
+  mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
+  hsv[..., 0] = ang * 180 / np.pi / 2
+  hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
+  bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+  return bgr

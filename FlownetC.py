@@ -11,7 +11,7 @@ class FlowNetC(nn.Module):
         super(FlowNetC,self).__init__()
 
         self.batchNorm = batchNorm
-        self.conv1      = conv(self.batchNorm,   3,   64, kernel_size=7, stride=2)
+        self.conv1      = conv(self.batchNorm,   1,   64, kernel_size=7, stride=2)
         self.conv2      = conv(self.batchNorm,  64,  128, kernel_size=5, stride=2)
         self.conv3      = conv(self.batchNorm, 128,  256, kernel_size=5, stride=2)
         self.conv_redir = conv(self.batchNorm, 256,   32, kernel_size=1, stride=1)

@@ -48,14 +48,11 @@ def train(train_loader, model, optimizer):
 	# print("combined_loss",combined_loss)
 
 	# total_loss = torch.sum(torch.tensor(combined_loss).type(torch.cuda.FloatTensor))
-	print("loss_type",type(loss))
 	
 	optimizer.zero_grad()
-	print("loss_type",type(loss))
 	loss.backward()
-	print("loss_type",type(loss))
-	
 	optimizer.step()	
+	# print(loss.grad)
+	# print(loss)
 
 	return loss	  	
-	
