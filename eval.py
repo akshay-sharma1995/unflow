@@ -49,7 +49,7 @@ def evaluate(train_loader, model):
 	# print("out_flow12.shape",out_flow12.size())
 	h, w = train_loader.size()[-2:] ## image size
 
-	print("h,w",h,w)
+	# print("h,w",h,w)
 	
 	out_flow12 = F.interpolate(out_flow12, (h,w)) ## upsampling flow to image size
 	out_flow23 = F.interpolate(out_flow23, (h,w)) ## upsampling flow to image size
@@ -105,9 +105,10 @@ def main():
 	# random.shuffle(idxs) ## shuffling the idxs
 	# num_epochs = 10
 	# batches_processed = 0
-	epoch_loss_list = []
 	for epoch in range(0,1):
 		# epoch_loss = 0
+		loss_list = []
+		# 
 		for i in range(len(idxs)):
 			image_batch = []
 			if(len(idxs)-i>=batch_size):
@@ -165,6 +166,8 @@ def main():
 			print("loss12",loss12)
 			print("loss23",loss23)
 
+			loss_list.append(loss12.detach().cpu().numpy())
+
 			# print("out_flow12",out_flow12.size())
 			
 			# print("warped_images.shape",warped_img12.size())
@@ -177,8 +180,12 @@ def main():
 
 			skimage.io.imsave(warped_img_direc+"warped12"+".png",warped_img12[0,:,:,0].detach().cpu().numpy())
 			skimage.io.imsave(warped_img_direc+"warped23"+".png",warped_img23[0,:,:,0].detach().cpu().numpy())
-
-
+		# fig = plt.figure(1)
+		# plt.plot(idxs,loss_list,'k-')
+		# plt.xlabel("")
+		# plt.savefig("./loss_plot_no_t_loss.png")
+		loss_list = np.array(loss_list)
+		np.save("./loss_list_no_t_loss",loss_list)
 
 
 			# epoch_loss += batch_loss
