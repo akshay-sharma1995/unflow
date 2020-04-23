@@ -50,9 +50,12 @@ class FlowNetC(nn.Module):
                 constant_(m.bias, 0)
 
     def forward(self, x):# X.SHAPE = Bx2xcxhxw
-        x1 = torch.tensor(x[:,0]).type(torch.cuda.FloatTensor) ## x1.shape = B,C,H,W
+
+        # x1 = torch.tensor(x[:,0], dtype = torch.float32, device = DEVICE) ## x1.shape = B,C,H,W
+        x1 = x[:,0].clone().detach().requires_grad_(True)
         # print("x.shape",np.shape(x1))
-        x2 = torch.tensor(x[:,1]).type(torch.cuda.FloatTensor)
+        # x2 = torch.tensor(x[:,1], dtype = torch.float32, device = DEVICE)
+        x2 = x[:,1].clone().detach().requires_grad_(True)
         # x3 = torch.tensor(x[:,2]).type(torch.cuda.FloatTensor)
         # x1 = np.rollaxis(x1,2,1)
         # x1 = np.rollaxis(x1,3,2)

@@ -22,6 +22,9 @@ import torch.optim as optim
 import torch
 from train import *
 from util import rgb_to_y
+from util import *
+from DataLoader import *
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def imlist(fpath):
     flist = os.listdir(fpath)
@@ -36,14 +39,19 @@ def plot_loss(epoch_loss_list,num_epochs):
 
 
 def main():
+    args = parse_arguments()
+
+    
     model = FlowNetC()
     # s_loss = 
     if torch.cuda.is_available():
         model.cuda()
         print("Model shifted to GPU")
 
+    data_dir = args.data_dir
+
     optimizer = optim.Adam(model.parameters(),lr=1e-4)
-    DIR = "../../../Project_data/training_data/npz_3_set/"
+    
     checkpoints_dir = "./checkpoints/"
     # input_transform = transforms.Compose([
     #     flow_transforms.ArrayToTensor(),
@@ -54,48 +62,63 @@ def main():
     #     flow_transforms.ArrayToTensor(),
     #     transforms.Normalize(mean=[0,0],std=[20,20])
     # ])
-    batch_size = 1
-    # length =
-    flist = imlist(DIR)
-    # print("flist",flist)
-    number_of_image_sets = len(flist)
-    idxs = (np.arange(1,number_of_image_sets,1)) ## id of all image_sets
-    random.shuffle(idxs) ## shuffling the idxs
+    # batch_size = 1
+
+    dataset = MCLVDataset(folder_name="/home/suhail/DL/let_it_flow/data/MCL-V/video_bitstream/",
+    transform=transforms.Compose([RandomVerticalFlip(), 
+        RandomHorizontalFlip(), 
+        RandomCrop([384, 512]),
+        Normalize(),
+        ToTensor()
+    ]), diff_frames=1) 
+
+    dataloader = DataLoader(dataset, batch_size = 1, shuffle = True, num_workers = 4)
+
     num_epochs = 10
     batches_processed = 0
     epoch_loss_list = []
     for epoch in range(0,num_epochs):
 
         epoch_loss = 0
-        for i in range(len(idxs)):
-            image_batch = []
-            if(len(idxs)-i>=batch_size):
-                count = batch_size
-            else:
-                count = len(idxs) - i
-            for j in range(count): ## making batches
-                path = DIR + flist[idxs[i]]
-                image_triplet = np.load(path)['arr_0']
-                image_triplet[0] = skimage.color.rgb2ycbcr(image_triplet[0])
-                image_triplet[1] = skimage.color.rgb2ycbcr(image_triplet[1])
-                image_triplet[2] = skimage.color.rgb2ycbcr(image_triplet[2])
-
-                image_triplet = image_triplet[:,:,:,0:1] ## only y channel of each image
-
-                ## image_triplet.size = 3xHxWx3
-                ## mapping the images to (-1,1)
-                image_triplet = ((image_triplet.astype(np.float64) - 16.0) / (235.0-16.0))   * 2.0 - 1.0
-                # print("max_min", np.nanmax(image_triplet),np.nanmin(image_triplet))
-                image_batch.append(image_triplet)
-
-            image_batch = np.array(image_batch)
-            image_batch = np.rollaxis(image_batch,4,2)
-
-            # print("listofimages.shape",np.shape(image_batch))
+        for batch_ndx, frames in enumerate(dataloader):
+            # my data 
+            frames = frames.to(DEVICE).float()
+            # frames1 = frames[:,0:1,:,:]
+            # frames2 = frames[:,1:2,:,:]
+            # frames = torch.tensor(frames, dtype =torch.float32 ,device = DEVICE)
             batches_processed += 1
-            batch_loss = train(image_batch,model,optimizer)
+            batch_loss = train(frames, model, optimizer)
             epoch_loss += batch_loss
-            if((batches_processed%200)==0):
+
+        # for i in range(len(idxs)):
+        #     image_batch = []
+        #     if(len(idxs)-i>=batch_size):
+        #         count = batch_size
+        #     else:
+        #         count = len(idxs) - i
+        #     for j in range(count): ## making batches
+        #         path = DIR + flist[idxs[i]]
+        #         image_triplet = np.load(path)['arr_0']
+        #         image_triplet[0] = skimage.color.rgb2ycbcr(image_triplet[0])
+        #         image_triplet[1] = skimage.color.rgb2ycbcr(image_triplet[1])
+        #         image_triplet[2] = skimage.color.rgb2ycbcr(image_triplet[2])
+
+        #         image_triplet = image_triplet[:,:,:,0:1] ## only y channel of each image
+
+        #         ## image_triplet.size = 3xHxWx3
+        #         ## mapping the images to (-1,1)
+        #         image_triplet = ((image_triplet.astype(np.float64) - 16.0) / (235.0-16.0))   * 2.0 - 1.0
+        #         # print("max_min", np.nanmax(image_triplet),np.nanmin(image_triplet))
+        #         image_batch.append(image_triplet)
+
+        #     image_batch = np.array(image_batch)
+        #     image_batch = np.rollaxis(image_batch,4,2)
+
+        #     # print("listofimages.shape",np.shape(image_batch))
+        #     batches_processed += 1
+        #     batch_loss = train(image_batch,model,optimizer)
+        #     epoch_loss += batch_loss
+            if((batches_processed%50)==0):
                 print("Epoch = ",epoch+1," Loss_after_",batches_processed,"_batches = ",epoch_loss)
         print("Epoch = ",epoch+1,"/ ",num_epochs,"  Loss = ",epoch_loss)
         epoch_loss_list.append(epoch_loss)
