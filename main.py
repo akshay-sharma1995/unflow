@@ -70,7 +70,7 @@ def main():
         RandomCrop([384, 512]),
         Normalize(),
         ToTensor()
-    ]), diff_frames=1) 
+    ]), diff_frames=4)
 
     dataloader = DataLoader(dataset, batch_size = 1, shuffle = True, num_workers = 4)
 
@@ -125,13 +125,13 @@ def main():
 
             ## saving model_weights
         # if((epoch + 1)%1):
-        checkpoint_file_name = checkpoints_dir + "t_loss_model"+str(epoch+1)+".pth"
-        torch.save({
-        'epoch': epoch+1,
-        'model_state_dict': model.state_dict(),
-        # 'optimizer_state_dict': optimizer.state_dict(),
-        'loss': epoch_loss}, checkpoint_file_name)
-        print("checkpoint_saved")
+        # checkpoint_file_name = checkpoints_dir + "t_loss_model"+str(epoch+1)+".pth"
+        # torch.save({
+        # 'epoch': epoch+1,
+        # 'model_state_dict': model.state_dict(),
+        # # 'optimizer_state_dict': optimizer.state_dict(),
+        # 'loss': epoch_loss}, checkpoint_file_name)
+        # print("checkpoint_saved")
             
 
     plot_loss(epoch_loss_list,num_epochs)

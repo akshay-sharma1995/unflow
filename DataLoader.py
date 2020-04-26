@@ -77,7 +77,7 @@ class MCLVDataset(Dataset):
     def __init__(self, folder_name, transform = None, diff_frames = 1):
         self.folder_name = folder_name
         self.transform = transform
-        self.num_seq = 5
+        self.num_seq = 1
         self.diff_frames = diff_frames
         self.num_frames = 149 - self.diff_frames
 

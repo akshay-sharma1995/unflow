@@ -6,10 +6,16 @@ import skimage.io
 from losses import *
 from matplotlib import pyplot as plt
 from image_warp import *
+import os
 
-
+from util import save_samples
+epoch_num = 0
+batch_num = 0
 def train(train_loader, model, optimizer):
-
+	global batch_num, epoch_num
+	batch_num = (batch_num+1) % 149
+	if(batch_num == 0):
+		epoch_num += 1
 	# switch to train mode
 	# train_loader = torch.tensor(train_loader).type(torch.cuda.FloatTensor)
 	## train_loader.size = Bx3x(C==3)xHxW
@@ -32,7 +38,9 @@ def train(train_loader, model, optimizer):
 	# im3 = train_loader[:,2] ## the 3rd image of the triplets in the batch
 
 	weights = [0.32, 0.08, 0.02, 0.01, 0.005]
-
+	folder_path = "/home/suhail/DL/unflow/data"
+	if(not os.path.exists(folder_path)):
+		os.mkdir(folder_path)
 	loss = 0
 	combined_loss = []
 	for i in range(0,len(out_flow12)):
@@ -56,5 +64,10 @@ def train(train_loader, model, optimizer):
 	optimizer.step()	
 	# print(loss.grad)
 	# print(loss)
+	for i in range(oflow12.shape[0]):
+		# print(warped_img12[0][0].shape)
+		save_samples(warped_img12[0][i].clone().detach().numpy(), folder_path, epoch_num, batch_num, "predicted")
+		save_samples(im1[0][i].clone().detach().numpy(), folder_path, epoch_num, batch_num, "actual_frame1")
+		save_samples(im2[0][i].clone().detach().numpy(), folder_path, epoch_num, batch_num, "actual_frame2")
 
 	return loss.item()	  	

@@ -4,6 +4,7 @@ import numpy as np
 # import cv2
 import skimage.io
 import argparse
+import os
 
 try:
     from spatial_correlation_sampler import spatial_correlation_sample
@@ -86,6 +87,21 @@ def rgb_to_y(input):
   # similarly write output[:, 1, :, :] and output[:, 2, :, :] using formulas from https://en.wikipedia.org/wiki/YCbCr
   return output[:, 0:1, :, :] ## just the y-channel
 
+def make_dirs(path_list):
+    for path in path_list:
+        if not os.path.exists(path):
+            os.mkdir(path)
+
+def save_samples(frames,dir_name, epoch, sample, folder_name ):
+    # print(frames.shape)
+    # pred_frames are numpy ndarray of size (B, 1, H, W)
+    save_dir = os.path.join(dir_name, "{}_{}".format(folder_name,epoch))
+    make_dirs([save_dir])
+    frames = (frames+1)*(255.0/2)
+    frames = frames.astype('uint8')
+    fname = os.path.join(save_dir, str(sample) + ".png")
+    # print(fname)
+    skimage.io.imsave(fname,frames)
 
 # def visualize_op_flow(flow):
 #   h,w = np.shape(flow)[0],np.shape(flow)[1]
