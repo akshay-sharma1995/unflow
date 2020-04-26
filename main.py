@@ -87,7 +87,7 @@ def main():
             # frames2 = frames[:,1:2,:,:]
             # frames = torch.tensor(frames, dtype =torch.float32 ,device = DEVICE)
             batches_processed += 1
-            batch_loss = train(frames, model, optimizer)
+            batch_loss = train(frames, model, epoch, batch_ndx, optimizer)
             epoch_loss += batch_loss
 
         # for i in range(len(idxs)):

@@ -9,13 +9,7 @@ from image_warp import *
 import os
 
 from util import save_samples
-epoch_num = 0
-batch_num = 0
-def train(train_loader, model, optimizer):
-	global batch_num, epoch_num
-	batch_num = (batch_num+1) % 149
-	if(batch_num == 0):
-		epoch_num += 1
+def train(train_loader, model, epoch_num, batch_num, optimizer):
 	# switch to train mode
 	# train_loader = torch.tensor(train_loader).type(torch.cuda.FloatTensor)
 	## train_loader.size = Bx3x(C==3)xHxW
